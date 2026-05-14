@@ -1,45 +1,76 @@
-from langchain_community.llms import Ollama
+import os
 
+from langchain_community.llms import Ollama
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-
-def get_embeddings():
-    """Loads and returns the HuggingFace embeddings model."""
-    print("Loading HuggingFaceEmbeddings (all-MiniLM-L6-v2)...")
-    return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+from langchain.prompts import PromptTemplate
 
 
+class Model:
+    def __init__(
+        self, model_name: str, embeddings_model: str, index_path: str = "data/faq_index"
+    ) -> None:
+        self.model_name = model_name
+        self.embeddings_model = embeddings_model
+        self.index_path = index_path
+        self.embeddings = None
+        self.retriever = None
+        self.llm = None
 
+    def get_embeddings(self):
+        print(f"Loading HuggingFaceEmbeddings ({self.embeddings_model})...")
+        self.embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
+        return self.embeddings
 
+    def load_retriever(self):
+        if self.embeddings is None:
+            self.get_embeddings()
+        if os.path.exists(self.index_path):
+            print(f"Loading FAISS vectorstore from {self.index_path}...")
+            vectorstore = FAISS.load_local(
+                self.index_path, self.embeddings, allow_dangerous_deserialization=True
+            )
+            self.retriever = vectorstore.as_retriever()
+            return self.retriever
+        print(f"Warning: {self.index_path} not found.")
+        return None
 
-def load_retriever(embeddings, index_path="data/faq_index"):
-    """Loads the FAISS index from the specified path."""
-    if os.path.exists(index_path):
-        print(f"Loading FAISS vectorstore from {index_path}...")
-        return FAISS.load_local(
-            index_path, 
-            embeddings,
-            allow_dangerous_deserialization=True
+    def get_llm(self):
+        print(f"Initializing Ollama LLM ({self.model_name})...")
+        self.llm = Ollama(model=self.model_name)
+        return self.llm
+
+    def query(self, question: str):
+        if self.retriever is None:
+            self.load_retriever()
+        if self.llm is None:
+            self.get_llm()
+        if self.retriever is None:
+            return {"error": "Vectorstore not loaded. Please run ingestion first."}
+
+        results = self.retriever.similarity_search_with_relevance_scores(question, k=1)
+
+        if not results:
+            return {
+                "response": "I couldn't find an answer to your question in the FAQ.",
+                "score": 0,
+            }
+
+        best_doc, score = results[0]
+        original_answer = best_doc.metadata.get("answer", "")
+
+        if score >= 0.90:
+            return {
+                "score": float(score),
+                "response": original_answer,
+                "direct_match": True,
+            }
+
+        prompt = PromptTemplate(
+            input_variables=["answer", "question"],
+            template="rephrase this FAQ answer naturally to address the question '{question}': {answer}",
         )
-    print(f"Warning: {index_path} not found.")
-    return None
+        formatted_prompt = prompt.format(question=question, answer=original_answer)
+        llm_output = self.llm.invoke(formatted_prompt)
 
-
-
-
-
-def get_llm():
-    """Initializes and returns the Ollama LLM."""
-    print("Initializing Ollama LLM (granite4.1:3b)...")
-    return Ollama(model="granite4.1:3b")
-
-
-
-
-res=get_llm()
-
-print(res.invoke("Who is the president of united states?"))
-
-
-
-
+        return {"score": float(score), "response": llm_output, "direct_match": False}
