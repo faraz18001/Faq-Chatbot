@@ -2,8 +2,8 @@ import os
 
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import FAISS
+from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.prompts import PromptTemplate
 
 
 class Model:
@@ -14,6 +14,7 @@ class Model:
         self.embeddings_model = embeddings_model
         self.index_path = index_path
         self.embeddings = None
+        self.vectorstore = None
         self.retriever = None
         self.llm = None
 
@@ -27,10 +28,10 @@ class Model:
             self.get_embeddings()
         if os.path.exists(self.index_path):
             print(f"Loading FAISS vectorstore from {self.index_path}...")
-            vectorstore = FAISS.load_local(
+            self.vectorstore = FAISS.load_local(
                 self.index_path, self.embeddings, allow_dangerous_deserialization=True
             )
-            self.retriever = vectorstore.as_retriever()
+            self.retriever = self.vectorstore.as_retriever()
             return self.retriever
         print(f"Warning: {self.index_path} not found.")
         return None
@@ -48,7 +49,9 @@ class Model:
         if self.retriever is None:
             return {"error": "Vectorstore not loaded. Please run ingestion first."}
 
-        results = self.retriever.similarity_search_with_relevance_scores(question, k=1)
+        results = self.vectorstore.similarity_search_with_relevance_scores(
+            question, k=1
+        )
 
         if not results:
             return {
@@ -74,3 +77,9 @@ class Model:
         llm_output = self.llm.invoke(formatted_prompt)
 
         return {"score": float(score), "response": llm_output, "direct_match": False}
+
+
+if __name__ == "__main__":
+    m = Model(model_name="granite4.1:3b", embeddings_model="all-MiniLM-L6-v2")
+    result = m.query("Does UT Dallas provide services for students with disabilities??")
+    print(result)
