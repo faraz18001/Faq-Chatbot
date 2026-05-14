@@ -11,7 +11,7 @@ env/
 faq/
 
 # FAISS Index (Generated)
-faq_index/
+faq_bot/data/faq_index/
 
 # Environment variables
 .env
