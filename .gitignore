@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+venv/
+.venv/
+env/
+faq/
+
+# FAISS Index (Generated)
+faq_index/
+
+# Environment variables
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
