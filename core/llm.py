@@ -19,11 +19,15 @@ class Model:
         self.llm = None
 
     def get_embeddings(self):
+        if self.embeddings is not None:
+            return self.embeddings
         print(f"Loading HuggingFaceEmbeddings ({self.embeddings_model})...")
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
         return self.embeddings
 
     def load_retriever(self):
+        if self.retriever is not None:
+            return self.retriever
         if self.embeddings is None:
             self.get_embeddings()
         if os.path.exists(self.index_path):
@@ -37,6 +41,8 @@ class Model:
         return None
 
     def get_llm(self):
+        if self.llm is not None:
+            return self.llm
         print(f"Initializing Ollama LLM ({self.model_name})...")
         self.llm = Ollama(model=self.model_name)
         return self.llm
