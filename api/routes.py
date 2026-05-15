@@ -2,17 +2,17 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 router = APIRouter()
-pipeline_instance = None
+model_instance = None
 
 class QuestionRequest(BaseModel):
     question: str
 
-def set_pipeline(pipeline):
-    global pipeline_instance
-    pipeline_instance = pipeline
+def set_model(model):
+    global model_instance
+    model_instance = model
 
 @router.post("/ask")
 def ask_question(req: QuestionRequest):
-    if not pipeline_instance:
-        return {"error": "Pipeline not initialized"}
-    return pipeline_instance.answer(req.question)
+    if not model_instance:
+        return {"error": "Model not initialized"}
+    return model_instance.query(req.question)

@@ -1,6 +1,6 @@
 import pandas as pd
 from langchain_core.documents import Document
-from core.embedder import get_embeddings
+from core.llm import Model
 from langchain_community.vectorstores import FAISS
 
 def ingest_data(csv_path="data/faq_data.csv", output_path="data/faq_index"):
@@ -16,7 +16,9 @@ def ingest_data(csv_path="data/faq_data.csv", output_path="data/faq_index"):
         for _, row in df.iterrows()
     ]
     
-    embeddings = get_embeddings()
+    # Use Model class for embeddings
+    m = Model(model_name="granite4.1:3b", embeddings_model="all-MiniLM-L6-v2")
+    embeddings = m.get_embeddings()
     
     print("Building FAISS index...")
     vectorstore = FAISS.from_documents(documents, embeddings)
