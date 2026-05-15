@@ -22,21 +22,19 @@ def model():
 
 @pytest.fixture(scope="session")
 def direct_match_question():
-    return "Does UT Dallas provide services for students with disabilities?"
+    return "What is Spectra Dashboard?"
 
 
 @pytest.fixture(scope="session")
 def direct_match_answer():
-    df = pd.read_csv("data/faq_data.csv")
-    return str(df.iloc[0]["Answering"]).strip()
+    return "Spectra Dashboards provides a central location for users to access, interact and analyze up-to-date information so they can make smarter, data-driven decisions. It provides interactive visualizations to find answers and handle large amounts of business data."
 
 
 @pytest.fixture(scope="session")
 def paraphrase_question():
-    return "Can disabled students get help at UTD?"
+    return "How can someone use the Spectra Dashboard for business data?"
 
 
 @pytest.fixture(scope="session")
 def expected_paraphrase_answer():
-    df = pd.read_csv("data/faq_data.csv")
-    return str(df.iloc[0]["Answering"]).strip()
+    return "Spectra Dashboards provides a central location for users to access, interact and analyze up-to-date information so they can make smarter, data-driven decisions. It provides interactive visualizations to find answers and handle large amounts of business data."

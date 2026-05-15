@@ -41,7 +41,7 @@ class TestRetrieval:
         results = model.vectorstore.similarity_search_with_relevance_scores(paraphrase_question, k=1)
         doc, score = results[0]
         assert score > 0
-        assert "disabilit" in doc.page_content.lower()
+        assert "spectra" in doc.page_content.lower()
 
     def test_gibberish_returns_low_score(self, model):
         result = model.query("asdfghjkl qwerty zxcvbnm")
